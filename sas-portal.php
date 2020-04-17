@@ -64,7 +64,21 @@ add_action('init', function() {
     session_set_cookie_params(60*60*24*365);
     session_start();
 });
-
+add_action('send_headers', function() {
+	return SAS_Portal_Public::checkForFileDownload();
+}, 0);
+/**
+ * register our wporg_settings_init to the admin_init action hook
+ */
+add_action( 'admin_init', function(){
+	SAS_Portal_Admin::sasportal_settings_init();
+});
+/**
+ * register our wporg_options_page to the admin_menu action hook
+ */
+add_action( 'admin_menu', function(){
+	SAS_Portal_Admin::sasportal_options_page();
+});
 
 /**
  * The core plugin class that is used to define internationalization,

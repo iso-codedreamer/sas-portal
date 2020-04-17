@@ -53,7 +53,11 @@ class SAS_Portal_Public {
 
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
-
+		$options = get_option("sasportal_options");
+		if(isset($options['expiry']) && is_numeric($options['expiry'])) {
+			self::$PASSWORD_EXPIRY_SECONDS = intval(floatval($options['expiry']) * 60.);
+			if(self::$PASSWORD_EXPIRY_SECONDS < 300) self::$PASSWORD_EXPIRY_SECONDS = 600;
+		}
 	}
 
 	/**
@@ -152,7 +156,7 @@ class SAS_Portal_Public {
 				self::alertError(__("Could not generate password. Please try again"));
 				return;
 			}
-			echo "<p>SEND Password: $password</p>";
+			self::sendPasswordBySMS($phone, $password);
 		} else {
 			$passwordExpireTime = $passwordRow->issued_time;
         }
@@ -192,6 +196,53 @@ class SAS_Portal_Public {
         if($success !== false) return $password;
         return false;
     }
+
+	private static function sendPasswordBySMS($phone, $password) {
+		$curl = curl_init();
+		$options = get_option('sasportal_options');
+		if(!is_array($options) || empty($options)) {
+			self::alertError(__("System configuration error. Contact school"));
+			return;
+		}
+
+		$text = str_replace("#pass", $password, $options['template']);
+		$params = array(
+			'from' => $options['senderid'],
+			'to' => $phone,
+			'text' => $text,
+			'transliteration' => "NON_UNICODE"
+		);
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $options['apiurl']."/sms/2/text/single",
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 30,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_POSTFIELDS => json_encode($params),
+			CURLOPT_HTTPHEADER => array(
+				"accept: application/json",
+				"authorization: {$options['auth']}",
+				"content-type: application/json"
+			),
+		));
+
+		$response = curl_exec($curl);
+		$err = curl_error($curl);
+		curl_close($curl);
+		if(!empty($err)) {
+			self::alertError(__("We could not send you an SMS. Please contact school"));
+			return;
+		}
+		$status = json_decode($response, true)['messages'][0]['status']['groupName'];
+		if($status != "PENDING") {
+			self::alertError(__("Message could not be sent to your phone. Please check with the school"));
+			return;
+		}
+		return;
+	}
 
     private static function handleVerifyLogin() {
 		global $wpdb;
@@ -286,7 +337,6 @@ class SAS_Portal_Public {
         return $number;
     }
 
-
 	private static function portalGenerate() {
 		global $wpdb;
 		$students = $wpdb->get_results(<<<SQL
@@ -305,15 +355,128 @@ SQL
 		<button class="btn btn-xs btn-xs" name="action" value="logout">Log out</button>
 	</form>
 	<label>Student: </label>
-	<select>
+	<select class="input-sm" id="studentSelect">
 		<?php
-		foreach($students as $student) echo "<option>".strtoupper($student->names)."</option>";
+		foreach($students as $student) {
+			$student->id = str_replace(" ", "", $student->names);
+			echo "<option value='{$student->id}'>".strtoupper($student->names)."</option>";
+		}
 		?>
 	</select>
 </div>
-<div>
-	<?php echo $students[0]->data; ?>
-</div>
-		<?php
+	<?php
+	foreach($students as $student) self::generateStudentPage($student);
+?>
+<script>
+(function () {
+    jQuery("#studentSelect").change(function() {
+        jQuery(".studentPage").css('display','none');
+        var id = jQuery(this).val();
+        jQuery("#"+id).css('display', '');
+    });
+
+    jQuery("#studentSelect").change();
+})();
+</script>
+<?php
 	}
+
+	private static function generateStudentPage($student) {
+		global $wpdb;
+		$studentData = json_decode($student->data, false);
+		$files = $wpdb->get_results(<<<SQL
+select sas_files.file_id, sas_files.filename, sas_files.notes, sas_files.subject, sas_files.upload_date 
+from sas_files inner join sas_files_classes sfc on sas_files.file_id = sfc.file_id
+where class='$student->class'
+SQL
+		);
+?>
+<div class="studentPage" style="display: none" id="<?php echo $student->id; ?>">
+	<h4><?php echo $student->names. " : ". $studentData->class; ?></h4>
+	<strong>Downloads</strong>
+	<?php
+	if(empty($files)) {
+		echo "<p>There are no files to download at the moment. Check in later</p>";
+		return;
+	}
+	?>
+	<style>
+		.file-notes {
+			font-size: 75%;
+			line-height: 1.2;
+			margin-top: 10px;
+			font-weight: bold;
+		}
+	</style>
+	<table>
+		<thead>
+		<tr>
+			<th>S/N</th>
+			<th>Details</th>
+			<th>Subject</th>
+			<th></th>
+		</tr>
+		<?php
+		$sn = 0;
+		foreach($files as $num => $file) {
+			$sn++;
+			echo <<<HTML
+<tr>
+	<td>$sn</td>
+	<td>
+		$file->filename<p class="file-notes">$file->notes</p>
+	</td>
+	<td>$file->subject</td>
+	<td>
+	<form method="post" class="pull-right">
+	<input type="hidden" name="file_id" value="$file->file_id"/>
+	<input type="hidden" name="action" value="download"/>
+	<button class="btn btn-primary btn-sm">Download</button>
+	</form>
+	</td>
+</td>
+</tr>
+HTML;
+
+		}
+		?>
+		</thead>
+	</table>
+
+</div>
+<?php
+	}
+
+	public static function checkForFileDownload() {
+		global $wpdb;
+		if(empty($_SESSION['verified'])) return null;
+		if($_POST['action'] === "download") {
+			$fileId = intval($_POST['file_id']);
+			if(empty($fileId)) return null;
+			$results = $wpdb->get_results(<<<SQL
+select * from sas_files sf 
+	inner join sas_files_classes sfc on sf.file_id = sfc.file_id
+	inner join sas_student_data sd on sd.class = sfc.class
+	inner join sas_phones sp on sp.reg_num = sd.reg_num
+where phone='{$_SESSION['phone']}' and sf.file_id=$fileId
+limit 1
+SQL
+);
+			if(count($results) != 1) return;
+			$file = $results[0];
+			header('Content-Description: File Transfer');
+			header("Content-Type: {$file->filemime}");
+			header('Content-Disposition: attachment; filename="'.$file->filename.'"');
+			header('Content-Transfer-Encoding: binary');
+			header('Connection: Keep-Alive');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+			header('Pragma: public');
+			header('Content-Length: ' . strlen($file->filecontent));
+			echo $file->filecontent;
+			exit;
+		}
+		return null;
+	}
+
 }
