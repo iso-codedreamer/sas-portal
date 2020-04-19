@@ -248,7 +248,7 @@ class SAS_Portal_Public {
 		global $wpdb;
 		$phone = self::formatPhoneNumber(sanitize_text_field($_POST['phone']));
 		$passwordRow = $wpdb->get_row("SELECT * FROM sas_issued_passwords where phone='$phone'");
-		if(!password_verify($_POST['password'], $passwordRow->hash)) {
+		if(!password_verify(strtoupper($_POST['password']), $passwordRow->hash)) {
 			sleep(1);
             self::formRequestPhoneNumber();
             self::alertError(__("Invalid password"));
