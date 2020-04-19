@@ -349,6 +349,14 @@ SQL
 			return;
 		}
 		?>
+<style>
+	.bold{
+		font-weight: bold;
+	}
+	.subject-name {
+		white-space: nowrap;
+	}
+</style>
 <div>
 	<form method="post" class="form-inline">
 		<label>Number: <?php echo $_SESSION['phone']; ?> </label>
@@ -393,6 +401,16 @@ SQL
 ?>
 <div class="studentPage" style="display: none" id="<?php echo $student->id; ?>">
 	<h4><?php echo $student->names. " : ". $studentData->class; ?></h4>
+	<?php
+	self::generateDownloadsSection($files);
+	self::generateResultsSection((array) $studentData->performance);
+	?>
+</div>
+<?php
+	}
+
+	private static function generateDownloadsSection($files) {
+		?>
 	<strong>Downloads</strong>
 	<?php
 	if(empty($files)) {
@@ -442,9 +460,19 @@ HTML;
 		?>
 		</thead>
 	</table>
+	<?php
+	}
 
-</div>
-<?php
+	private static function generateResultsSection($results) {
+		echo "<strong>Exam results</strong>";
+		if(!is_array($results) || empty($results)) {
+			echo "<p>There are no results to show</p>";
+			return;
+		}
+		foreach($results as $year => $resultsHtml) {
+			$resultsHtml = base64_decode($resultsHtml);
+			echo $resultsHtml;
+		}
 	}
 
 	public static function checkForFileDownload() {
