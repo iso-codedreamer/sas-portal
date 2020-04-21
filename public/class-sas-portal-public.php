@@ -367,7 +367,7 @@ SQL
 	<select class="input-sm" id="studentSelect">
 		<?php
 		foreach($students as $student) {
-			$student->id = str_replace(" ", "", $student->names);
+			$student->id = preg_replace('/[^a-zA-Z]/', '', $student->names);
 			echo "<option value='{$student->id}'>".strtoupper($student->names)."</option>";
 		}
 		?>
