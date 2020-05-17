@@ -270,7 +270,6 @@ class SAS_Portal_Public {
     }
 
     private static function handleLogout() {
-		return;
 		$_SESSION = array();
 		session_destroy();
     }
@@ -361,7 +360,7 @@ SQL
 <div>
 	<form method="post" class="form-inline">
 		<label>Number: <?php echo $_SESSION['phone']; ?> </label>
-		<button class="btn btn-xs btn-xs hidden" name="action" value="logout">Log out</button>
+		<button class="btn btn-xs btn-xs" name="action" value="logout">Log out</button>
 	</form>
 	<label>Student: </label>
 	<select class="input-sm" id="studentSelect">
