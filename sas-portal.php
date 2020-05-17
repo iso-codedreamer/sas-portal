@@ -9,14 +9,14 @@
  * that starts the plugin.
  *
  * @link              http://codedreamers.co.tz
- * @since             1.0.0
+ * @since             1.2.0
  * @package           SAS Portal
  *
  * @wordpress-plugin
  * Plugin Name:       ISO SAS Web Portal
  * Plugin URI:        http://codedreamers.co.tz
  * Description:       Provides a portal for parents to access student information & updates
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            Code Dreamers
  * Author URI:        http://codedreamers.co.tz
  * License:           GPL-2.0+
