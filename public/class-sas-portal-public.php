@@ -426,8 +426,13 @@ SQL
 			margin-top: 10px;
 			font-weight: bold;
 		}
+		.downloadsTable {
+			display: block !important;
+			overflow-x: auto !important;
+			white-space: nowrap !important;
+		}
 	</style>
-	<table>
+	<table class="downloadsTable">
 		<thead>
 		<tr>
 			<th>S/N</th>
