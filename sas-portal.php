@@ -16,7 +16,7 @@
  * Plugin Name:       ISO SAS Web Portal
  * Plugin URI:        http://codedreamers.co.tz
  * Description:       Provides a portal for parents to access student information & updates
- * Version:           1.2.0
+ * Version:           2.0.0
  * Author:            Code Dreamers
  * Author URI:        http://codedreamers.co.tz
  * License:           GPL-2.0+
@@ -34,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SAS_PORTAL_VERSION', '1.1.0' );
+define( 'SAS_PORTAL_VERSION', '2.0.0' );
 
 /**
  * The code that runs during plugin activation.
