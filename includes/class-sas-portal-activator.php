@@ -74,6 +74,12 @@ CREATE TABLE `sas_phones` (
   FOREIGN KEY (`reg_num`) REFERENCES `sas_student_data` (`reg_num`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+CREATE TABLE `sas_playlists` (
+  `class` varchar(15) NOT NULL,
+  `playlist_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`class`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 SQL;
 
 

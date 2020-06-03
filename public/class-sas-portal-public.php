@@ -121,7 +121,7 @@ class SAS_Portal_Public {
             }
         }
 
-        $content = ob_get_clean();
+        $content = do_shortcode(ob_get_clean());
         return $content;
     }
 
@@ -466,6 +466,18 @@ HTML;
 		</thead>
 	</table>
 	<?php
+	}
+
+	private static function generateVideosSection($playlistRow) {
+		?>
+		<strong>Videos</strong>
+		<?php
+		if(is_null($playlistRow)) {
+			echo "<p>There are no videos for this class at the moment. Check in later</p>";
+			return;
+		}
+		$playlistID = trim($playlistRow->playlist_id);
+		echo "[embedyt]https://www.youtube.com/embed?listType=playlist&list=$playlistID&layout=gallery[/embedyt]";
 	}
 
 	private static function generateResultsSection($results) {
