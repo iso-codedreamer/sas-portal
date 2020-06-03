@@ -80,6 +80,16 @@ CREATE TABLE `sas_playlists` (
   PRIMARY KEY (`class`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+CREATE TABLE `sas_files_downloads` (
+  `download_id` int(11) NOT NULL AUTO_INCREMENT,
+  `file_id` int(10) UNSIGNED DEFAULT NULL,
+  `filename` text,
+  `phone` varchar(16) DEFAULT NULL,
+  `download_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`download_id`),
+  FOREIGN KEY (`file_id`) REFERENCES `sas_files` (`file_id`) ON DELETE SET NULL ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 SQL;
 
 

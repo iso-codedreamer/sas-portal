@@ -356,13 +356,39 @@ SQL
 	.subject-name {
 		white-space: nowrap;
 	}
+	.file-notes {
+		font-size: 75%;
+		line-height: 1.2;
+		margin-top: 10px;
+		font-weight: bold;
+		white-space: normal;
+	}
+	.downloadsTable {
+		display: block !important;
+		overflow-x: auto !important;
+		white-space: nowrap !important;
+	}
+	.new-file {
+		border: 1px solid;
+		border-radius: 2px;
+		font-weight: bold;
+		padding: 0 2px;
+	}
+	.file-time {
+		float: right;
+		margin: 0;
+		padding: 0;
+		line-height: 0;
+		font-size: 70%;
+	}
 </style>
 <div>
 	<form method="post" class="form-inline">
 		<label>Number: <?php echo $_SESSION['phone']; ?> </label>
 		<button class="btn btn-xs btn-xs" name="action" value="logout">Log out</button>
 	</form>
-	<label>Student: </label>
+	<?php if(count($students) > 1) { ?>
+	<label>Choose between your <?php echo count($students) ?> students here: </label>
 	<select class="input-sm" id="studentSelect">
 		<?php
 		foreach($students as $student) {
@@ -371,6 +397,7 @@ SQL
 		}
 		?>
 	</select>
+	<?php } ?>
 </div>
 	<?php
 	foreach($students as $student) self::generateStudentPage($student);
@@ -393,16 +420,20 @@ SQL
 		global $wpdb;
 		$studentData = json_decode($student->data, false);
 		$files = $wpdb->get_results(<<<SQL
-select sas_files.file_id, sas_files.filename, sas_files.notes, sas_files.subject, sas_files.upload_date 
-from sas_files inner join sas_files_classes sfc on sas_files.file_id = sfc.file_id
+select sf.file_id, sf.filename, notes, subject, upload_date, download_id 
+from sas_files sf inner join sas_files_classes sfc on sf.file_id = sfc.file_id
+left join sas_files_downloads sfd on sf.file_id = sfd.file_id and phone = '{$_SESSION["phone"]}'
 where class='$student->class'
+order by download_id, upload_date desc
 SQL
 		);
+		$playListRow = $wpdb->get_row("select * from sas_playlists where class = '$student->class'");
 ?>
 <div class="studentPage" style="display: none" id="<?php echo $student->id; ?>">
 	<h4><?php echo $student->names. " : ". $studentData->class; ?></h4>
 	<?php
 	self::generateDownloadsSection($files);
+	self::generateVideosSection($playListRow);
 	self::generateResultsSection((array) $studentData->performance);
 	?>
 </div>
@@ -418,19 +449,6 @@ SQL
 		return;
 	}
 	?>
-	<style>
-		.file-notes {
-			font-size: 75%;
-			line-height: 1.2;
-			margin-top: 10px;
-			font-weight: bold;
-		}
-		.downloadsTable {
-			display: block !important;
-			overflow-x: auto !important;
-			white-space: nowrap !important;
-		}
-	</style>
 	<table class="downloadsTable">
 		<thead>
 		<tr>
@@ -442,12 +460,21 @@ SQL
 		<?php
 		$sn = 0;
 		foreach($files as $num => $file) {
+			$new_lbl = '';
+			if(empty($file->download_id)) $new_lbl = '<sup class="new-file">NEW</sup>';
+			$file->time = date('d M Y H:i', $file->upload_date);
 			$sn++;
 			echo <<<HTML
 <tr>
 	<td>$sn</td>
 	<td>
-		$file->filename<p class="file-notes">$file->notes</p>
+		<form method="post" style="display: inline; padding: 0; margin: 0;">
+		<input type="hidden" name="file_id" value="$file->file_id"/>
+		<input type="hidden" name="action" value="download"/>
+		<button type="submit" style="padding:0; background: none; border: none;">$new_lbl $file->filename </button>
+		</form>
+		<p class="file-notes">$file->notes</p>
+		<p class="file-time">$file->time</p>
 	</td>
 	<td>$file->subject</td>
 	<td>
@@ -519,6 +546,7 @@ SQL
 			header('Pragma: public');
 			header('Content-Length: ' . strlen($file->filecontent));
 			echo $file->filecontent;
+			$wpdb->query("insert into sas_files_downloads (file_id, filename, phone) values ($fileId, '{$file->filename}', '{$_SESSION['phone']}')");
 			exit;
 		}
 		return null;
