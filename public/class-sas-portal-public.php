@@ -381,6 +381,9 @@ SQL
 		line-height: 0;
 		font-size: 70%;
 	}
+	thead {
+		white-space: normal !important;
+	}
 </style>
 <div>
 	<form method="post" class="form-inline">
