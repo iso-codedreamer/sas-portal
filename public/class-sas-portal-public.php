@@ -437,6 +437,7 @@ SQL
 	<?php
 	self::generateDownloadsSection($files);
 	self::generateVideosSection($playListRow);
+	self::generateDuesSection($studentData->dues);
 	self::generateResultsSection((array) $studentData->performance);
 	?>
 </div>
@@ -508,6 +509,16 @@ HTML;
 		}
 		$playlistID = trim($playlistRow->playlist_id);
 		echo "[embedyt]https://www.youtube.com/embed?listType=playlist&list=$playlistID&layout=gallery[/embedyt]";
+	}
+
+	private static function generateDuesSection($duesHtml) {
+		echo "<strong>Payments Due</strong>";
+		if(empty($duesHtml)) {
+			echo "<p>Dues for this student are not available at the moment. Check in later</p>";
+			return;
+		}
+		$duesHtml = base64_decode($duesHtml);
+		echo $duesHtml;
 	}
 
 	private static function generateResultsSection($results) {

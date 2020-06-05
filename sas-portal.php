@@ -9,14 +9,14 @@
  * that starts the plugin.
  *
  * @link              http://codedreamers.co.tz
- * @since             1.2.0
+ * @since             1.0.0
  * @package           SAS Portal
  *
  * @wordpress-plugin
  * Plugin Name:       ISO SAS Web Portal
  * Plugin URI:        http://codedreamers.co.tz
  * Description:       Provides a portal for parents to access student information & updates
- * Version:           2.0.1
+ * Version:           3.0.0
  * Author:            Code Dreamers
  * Author URI:        http://codedreamers.co.tz
  * License:           GPL-2.0+
@@ -34,7 +34,7 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SAS_PORTAL_VERSION', '2.0.1' );
+define( 'SAS_PORTAL_VERSION', '3.0.0' );
 
 /**
  * The code that runs during plugin activation.
